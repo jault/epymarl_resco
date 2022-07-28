@@ -1,7 +1,8 @@
 REGISTRY = {}
 
-from .episode_runner import EpisodeRunner
-REGISTRY["episode"] = EpisodeRunner
+from . import episode_runner
 
-from .parallel_runner import ParallelRunner
-REGISTRY["parallel"] = ParallelRunner
+REGISTRY["episode"] = episode_runner.EpisodeRunner
+
+from . import parallel_runner
+REGISTRY["parallel"] = parallel_runner.ParallelRunner

@@ -1,6 +1,6 @@
 import gym
 from gym.spaces import Tuple
-from pretrained.ddpg import DDPG
+from .ddpg import DDPG
 import torch
 import os
 

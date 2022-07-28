@@ -1,5 +1,4 @@
 from functools import partial
-import pretrained
 from smac.env import MultiAgentEnv, StarCraft2Env
 import sys
 import os

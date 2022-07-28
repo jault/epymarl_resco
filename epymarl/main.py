@@ -9,10 +9,10 @@ from sacred.observers import FileStorageObserver, MongoObserver
 from sacred.utils import apply_backspaces_and_linefeeds
 import sys
 import torch as th
-from utils.logging import get_logger
+from .utils.logging import get_logger
 import yaml
 
-from run import run
+from .run import run
 
 SETTINGS['CAPTURE_MODE'] = "fd" # set to "no" if you want to see stdout/stderr in console
 logger = get_logger()
@@ -36,7 +36,7 @@ def my_main(_run, _config, _log):
     run(_run, config, _log)
 
 
-def _get_config(params, arg_name, subfolder):
+def _get_config(path, params, arg_name, subfolder):
     config_name = None
     for _i, _v in enumerate(params):
         if _v.split("=")[0] == arg_name:
@@ -45,7 +45,7 @@ def _get_config(params, arg_name, subfolder):
             break
 
     if config_name is not None:
-        with open(os.path.join(os.path.dirname(__file__), "config", subfolder, "{}.yaml".format(config_name)), "r") as f:
+        with open(os.path.join(path, "config", subfolder, "{}.yaml".format(config_name)), "r") as f:
             try:
                 config_dict = yaml.load(f)
             except yaml.YAMLError as exc:
@@ -71,20 +71,23 @@ def config_copy(config):
         return deepcopy(config)
 
 
-if __name__ == '__main__':
+def run_main(path=None):
+    if path is None:
+        path = os.path.dirname(__file__)
+    print(os.path.dirname(__file__))
     params = deepcopy(sys.argv)
     th.set_num_threads(1)
 
     # Get the defaults from default.yaml
-    with open(os.path.join(os.path.dirname(__file__), "config", "default.yaml"), "r") as f:
+    with open(os.path.join(path, "config", "default.yaml"), "r") as f:
         try:
             config_dict = yaml.load(f)
         except yaml.YAMLError as exc:
             assert False, "default.yaml error: {}".format(exc)
 
     # Load algorithm and env base configs
-    env_config = _get_config(params, "--env-config", "envs")
-    alg_config = _get_config(params, "--config", "algs")
+    env_config = _get_config(path, params, "--env-config", "envs")
+    alg_config = _get_config(path, params, "--config", "algs")
     # config_dict = {**config_dict, **env_config, **alg_config}
     config_dict = recursive_dict_update(config_dict, env_config)
     config_dict = recursive_dict_update(config_dict, alg_config)
@@ -92,12 +95,11 @@ if __name__ == '__main__':
     try:
         map_name = config_dict["env_args"]["map_name"]
     except:
-        map_name = config_dict["env_args"]["key"]    
-    
-    
-    # now add all the config to sacred
+        map_name = config_dict["env_args"]["key"]
+
+        # now add all the config to sacred
     ex.add_config(config_dict)
-    
+
     for param in params:
         if param.startswith("env_args.map_name"):
             map_name = param.split("=")[1]
@@ -114,3 +116,6 @@ if __name__ == '__main__':
 
     ex.run_commandline(params)
 
+
+if __name__ == '__main__':
+    run_main()

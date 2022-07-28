@@ -1,6 +1,6 @@
-from envs import REGISTRY as env_REGISTRY
+from ..envs import REGISTRY as env_REGISTRY
 from functools import partial
-from components.episode_buffer import EpisodeBatch
+from ..components.episode_buffer import EpisodeBatch
 import numpy as np
 
 
@@ -46,6 +46,7 @@ class EpisodeRunner:
         self.t = 0
 
     def run(self, test_mode=False):
+        print("RUNNING EPISODE")
         self.reset()
 
         terminated = False
@@ -97,8 +98,10 @@ class EpisodeRunner:
         cur_stats["n_episodes"] = 1 + cur_stats.get("n_episodes", 0)
         cur_stats["ep_length"] = self.t + cur_stats.get("ep_length", 0)
 
+        print('TEST MODE', test_mode)
         if not test_mode:
             self.t_env += self.t
+            print(self.t_env, self.t)
 
         cur_returns.append(episode_return)
 

@@ -41,6 +41,7 @@ class Logger:
             self._run_obj.log_scalar(key, value, t)
 
     def print_recent_stats(self):
+        pass
         log_str = "Recent Stats | t_env: {:>10} | Episode: {:>8}\n".format(*self.stats["episode"][-1])
         i = 0
         for (k, v) in sorted(self.stats.items()):

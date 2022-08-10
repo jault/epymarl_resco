@@ -4,7 +4,7 @@ from ..components.episode_buffer import EpisodeBatch
 import numpy as np
 
 
-class EpisodeRunner:
+class NStepRunner:
 
     def __init__(self, args, logger):
         self.args = args
@@ -15,6 +15,7 @@ class EpisodeRunner:
         self.env = env_REGISTRY[self.args.env](**self.args.env_args)
         self.episode_limit = self.env.episode_limit
         self.t = 0
+        self.n = args.n
 
         self.t_env = 0
 
@@ -40,19 +41,16 @@ class EpisodeRunner:
     def close_env(self):
         self.env.close()
 
-    def reset(self):
-        self.batch = self.new_batch()
-        self.env.reset()
-        self.t = 0
-
     def run(self, test_mode=False):
-        self.reset()
+        self.batch = self.new_batch()
+        self.t = 0
+        if self.t_env == 0: self.env.reset()
 
         terminated = False
         episode_return = 0
         self.mac.init_hidden(batch_size=self.batch_size)
 
-        while not terminated:
+        while self.t < self.n:
 
             pre_transition_data = {
                 "state": [self.env.get_state()],
@@ -69,10 +67,12 @@ class EpisodeRunner:
             reward, terminated, env_info = self.env.step(actions[0])
             episode_return += reward
 
+            if terminated: self.env.reset()
+
             post_transition_data = {
                 "actions": actions,
                 "reward": [(reward,)],
-                "terminated": [(terminated != env_info.get("episode_limit", False),)],
+                "terminated": [(terminated,)],
             }
 
             self.batch.update(post_transition_data, ts=self.t)
